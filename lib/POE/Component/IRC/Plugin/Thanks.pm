@@ -3,7 +3,7 @@ package POE::Component::IRC::Plugin::Thanks;
 use warnings;
 use strict;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Carp;
 use POE::Component::IRC::Plugin qw( :ALL );
@@ -243,8 +243,9 @@ that user. B<Defaults to:> empty, no bans are set.
 
     ->new( eat => 0 );
 
-If set to a true value plugin will return a C<PCI_EAT_NONE> after responding
-with a "thank you" message. If C<eat> is set to a true value, plugin will
+If set to a I<false> value plugin will return a C<PCI_EAT_NONE>
+after responding
+with a "thank you" message. If C<eat> is set to a I<true> value, plugin will
 return a C<PCI_EAT_ALL> after responding with a "thank you" message.
 See L<POE::Component::IRC::Plugin> documentation for more information if
 you are interested.
