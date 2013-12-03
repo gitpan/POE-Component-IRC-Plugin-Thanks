@@ -1,9 +1,14 @@
 Revision history for POE-Component-IRC-Plugin-Thanks
 
-0.02    Tue Feb 12 2008
-        - fixed documentation discrepancy for the
-            'eat' constructor's option
+0.03    2013-12-02
+        - Minor fixes to comply with the specs and Kwalitee game
+        - Added autogeneration of README from POD
+        - Moved author tests to xt/
 
-0.01    Feb 5 2008
-        First version, released on an unsuspecting world.
+0.02    2008-02-12
+        - fixed documentation discrepancy for the
+          'eat' constructor's option
+
+0.01    2008-02-05
+        - First version, released on an unsuspecting world.
 

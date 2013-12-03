@@ -3,7 +3,7 @@ package POE::Component::IRC::Plugin::Thanks;
 use warnings;
 use strict;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Carp;
 use POE::Component::IRC::Plugin qw( :ALL );
@@ -102,8 +102,9 @@ sub _make_default_messages {
 
 __END__
 
-=pod
+=encoding utf8
 
+=pod
 
 =head1 NAME
 
@@ -116,7 +117,7 @@ POE::Component::IRC::Plugin::Thanks - make witty responses to "thank you"s
 
     use POE qw(Component::IRC  Component::IRC::Plugin::Thanks);
 
-    my $irc = POE::Component::IRC->spawn( 
+    my $irc = POE::Component::IRC->spawn(
             nick    => 'ThankBot',
             server  => 'irc.freenode.net',
             port    => 6667,
@@ -133,10 +134,10 @@ POE::Component::IRC::Plugin::Thanks - make witty responses to "thank you"s
 
     sub _start {
         $irc->yield( register => 'all' );
-        
+
         # register our plugin
         $irc->plugin_add( 'Thanks' => POE::Component::IRC::Plugin::Thanks->new );
-        
+
         $irc->yield( connect => { } );
         undef;
     }

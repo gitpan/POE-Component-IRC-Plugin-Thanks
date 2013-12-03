@@ -1,52 +1,237 @@
-POE-Component-IRC-Plugin-Thanks
+NAME
+    POE::Component::IRC::Plugin::Thanks - make witty responses to "thank
+    you"s
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
+SYNOPSIS
+        use strict;
+        use warnings;
 
-A README file is required for CPAN modules since CPAN extracts the README
-file from a module distribution so that people browsing the archive
-can use it to get an idea of the module's uses. It is usually a good idea
-to provide version information here so that people can decide whether
-fixes for the module are worth downloading.
+        use POE qw(Component::IRC  Component::IRC::Plugin::Thanks);
 
+        my $irc = POE::Component::IRC->spawn(
+                nick    => 'ThankBot',
+                server  => 'irc.freenode.net',
+                port    => 6667,
+                ircname => 'Silly Thankie bot',
+        ) or die "Oh noes :( $!";
 
-INSTALLATION
+        POE::Session->create(
+            package_states => [
+                main => [ qw( _start irc_001 ) ],
+            ],
+        );
 
-To install this module, run the following commands:
+        $poe_kernel->run();
 
-	perl Build.PL
-	./Build
-	./Build test
-	./Build install
+        sub _start {
+            $irc->yield( register => 'all' );
 
-SUPPORT AND DOCUMENTATION
+            # register our plugin
+            $irc->plugin_add( 'Thanks' => POE::Component::IRC::Plugin::Thanks->new );
 
-After installing, you can find documentation for this module with the
-perldoc command.
+            $irc->yield( connect => { } );
+            undef;
+        }
 
-    perldoc POE::Component::IRC::Plugin::Thanks
+        sub irc_001 {
+            my ( $kernel, $sender ) = @_[ KERNEL, SENDER ];
+            $kernel->post( $sender => join => '#zofbot' )
+            undef;
+        }
 
-You can also look for information at:
+CONSTRUCTOR
+        # vanilla plugin
+        $irc->plugin_add( 'Thanks' => POE::Component::IRC::Plugin::Thanks->new );
 
-    RT, CPAN's request tracker
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=POE-Component-IRC-Plugin-Thanks
+        # juicy flavor
+        $irc->plugin_add(
+            'Thanks' => POE::Component::IRC::Plugin::Thanks->new(
+                trigger => qr/^\s*(?:thanks|thank you)/i,
+                respond => 1,
+                thanks_event => 'thanks_response',
+                messages => [       # discard default messages and use these
+                    'response 1',
+                    'response 2',
+                ],
+                extra_messages => [ # add these to the default messages
+                    'response 1',
+                    'response 2',
+                ],
+                bans => [ qr/^Spammer/i, qr/spam[.]net$/i ],
+            )
+        );
 
-    AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/POE-Component-IRC-Plugin-Thanks
+    The constructor returns a POE::Component::IRC::Plugin object suitable
+    for consumtion by POE::Component::IRC "plugin_add()" method. It takes a
+    few arguments but *all of them are optional*. The possible arguments
+    are:
 
-    CPAN Ratings
-        http://cpanratings.perl.org/d/POE-Component-IRC-Plugin-Thanks
+  trigger
+        ->new( trigger => qr/^\s*(?:thanks|thank you)/i );
 
-    Search CPAN
-        http://search.cpan.org/dist/POE-Component-IRC-Plugin-Thanks
+    Takes a regex as an argument. Specifies what messages to consider to be
+    "thank you" messages. In other words, messages that match "trigger" will
+    generate a random "thank you" response from this plugin. Defaults to:
+    "qr/ ^ (?:thank s? (?: \s* you )? | th?a?nx | thx | tyvm )/xi"
 
+  respond
+        ->new( respond => 0 );
 
-COPYRIGHT AND LICENCE
+    The "respond" argument controls whether or not the plugin should auto
+    respond to the person thanking us. If set to a *false* value plugin will
+    not auto respond and only the "thanks_event" (see below) will be sent
+    out. If set to a true value plugin will respond to the person *and* send
+    the event.
 
-Copyright (C) 2008 Zoffix Znet
+  thanks_event
+        ->new( thanks_event => 'thanks_response' );
 
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+    Whenever the bot is addressed and the message matches the "trigger" (see
+    above) the plugin will send out the event specified by "thanks_event".
+    See EMITED EVENTS section below for more information.
+
+  messages
+        ->new(
+               messages => [
+                    'response 1',
+                    'response 2',
+                ],
+        );
+
+    Plugin has a set of predefined "thank you" responses which are listed in
+    the DEFAULT RESPONSES section below. If you wish, you can specify your
+    own set using the "messages" argument which *takes an arrayref* of
+    messages. Defaults to: the responses listed in the DEFAULT RESPONSES
+    section below.
+
+  extra_messages
+        ->new(
+                extra_messages => [ # add these to the default messages
+                    'response 1',
+                    'response 2',
+                ],
+        );
+
+    The same as "messages" argument (see above) *except* the messages listed
+    in "extra_messages" will be *appended* to messages listed in "messages"
+    argument. In other words, if you want to add a few responses to the
+    default responses you don't have to redefine every default response in
+    "messages" argument, but instead just list your extra messages in
+    "extra_messages" argument. Default to: nothing (obviously).
+
+  bans
+        ->new( bans => [ qr/^Spammer/i, qr/spam[.]net$/i ] );
+
+    The "bans" key *takes an arrayref* as an argument with regex objects as
+    elements of that arrayref. If plugin recieves input from a user who's
+    mask matches any of the regexes specified in "bans" key, plugin will
+    ignore that user. Defaults to: empty, no bans are set.
+
+  eat
+        ->new( eat => 0 );
+
+    If set to a *false* value plugin will return a "PCI_EAT_NONE" after
+    responding with a "thank you" message. If "eat" is set to a *true*
+    value, plugin will return a "PCI_EAT_ALL" after responding with a "thank
+    you" message. See POE::Component::IRC::Plugin documentation for more
+    information if you are interested. Defaults to: 1
+
+DEFAULT RESPONSES
+    The plugin has a set of defined "thank you" responses, which are what is
+    the default of "messages" argument of the contructor. See "messages" and
+    "extra_messages" arguments to the contructor if you wish to change the
+    default responses in any way. I am very open to new additions of
+    messages to the default list, feel free to suggest some witty responses.
+    The following arrayref is the default value of "messages" argument if
+    the contructor:
+
+        [
+             q|You are welcome!|,
+             q|That will be $50... CASH!|,
+             q|yeah, yeah, that's what you all say...|,
+             q|No problema :)|,
+             q|can you help _me_ now?|,
+             q|FYI, thanking the bot says a lot about your mental state!|,
+             q|It's ok, I'm just a bot, no need for "thank you"s.|,
+             q|No, no, thank YOU|,
+        ]
+
+EMITED EVENTS
+    Whenever the plugin responds with a "thank you" response. The plugin
+    emits an event, name of which is specified by the <thanks_event>
+    argument to the constructor.
+
+    By setting "respond" in the contructor to a false value you may generate
+    responses yourself whenever you recieve the "thanks_event".
+
+    The event handler which is handling this event will recieve a hashref in
+    its "ARG0" argument. The hashref will have the following keys/values:
+
+        {
+            who => 'Zoffix!zoffix@unaffiliated/zoffix',
+            channel => '#zofbot',
+            what => '_ZofBot, thanks!',
+            response => 'No, no, thank YOU'
+        }
+
+  who
+        { who => 'Zoffix!zoffix@unaffiliated/zoffix' }
+
+    The mask of the person who thanked us.
+
+  channel
+        { channel => '#zofbot' }
+
+    The channel where the message originated.
+
+  what
+        { what => '_ZofBot, thanks!' }
+
+    The content of the message.
+
+  response
+        { response => 'No, no, thank YOU' }
+
+    The randomly generated "thank you" response.
+
+AUTHOR
+    Zoffix Znet, "<zoffix at cpan.org>"
+
+BUGS
+    Please report any bugs or feature requests to
+    "bug-poe-component-irc-plugin-thanks at rt.cpan.org", or through the web
+    interface at
+    <http://rt.cpan.org/NoAuth/ReportBug.html?Queue=POE-Component-IRC-Plugin
+    -Thanks>. I will be notified, and then you'll automatically be notified
+    of progress on your bug as I make changes.
+
+SUPPORT
+    You can find documentation for this module with the perldoc command.
+
+        perldoc POE::Component::IRC::Plugin::Thanks
+
+    You can also look for information at:
+
+    *   RT: CPAN's request tracker
+
+        <http://rt.cpan.org/NoAuth/Bugs.html?Dist=POE-Component-IRC-Plugin-T
+        hanks>
+
+    *   AnnoCPAN: Annotated CPAN documentation
+
+        <http://annocpan.org/dist/POE-Component-IRC-Plugin-Thanks>
+
+    *   CPAN Ratings
+
+        <http://cpanratings.perl.org/d/POE-Component-IRC-Plugin-Thanks>
+
+    *   Search CPAN
+
+        <http://search.cpan.org/dist/POE-Component-IRC-Plugin-Thanks>
+
+COPYRIGHT & LICENSE
+    Copyright 2008 Zoffix Znet, all rights reserved.
+
+    This program is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself.
 

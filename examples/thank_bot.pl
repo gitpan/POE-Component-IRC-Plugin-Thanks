@@ -3,13 +3,13 @@
 use strict;
 use warnings;
 
-use lib '../lib';
+use lib qw(lib ../lib);
 
 use POE qw(Component::IRC Component::IRC::Plugin::Thanks);
 
 my @Channels = ( '#zofbot' );
 
-my $irc = POE::Component::IRC->spawn( 
+my $irc = POE::Component::IRC->spawn(
         nick    => 'ThankBot',
         server  => 'irc.freenode.net',
         port    => 6667,
@@ -40,10 +40,10 @@ sub thanks_response {
 
 sub _start {
     $irc->yield( register => 'all' );
-    
+
     # register our plugin
     $irc->plugin_add( 'Thanks' => POE::Component::IRC::Plugin::Thanks->new );
-    
+
     $irc->yield( connect => { } );
     undef;
 }
@@ -59,7 +59,7 @@ sub irc_001 {
 
 sub _default {
     my ($event, $args) = @_[ARG0 .. $#_];
-        
+
     my @output = ( "$event: " );
 
     foreach my $arg ( @$args ) {
